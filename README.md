@@ -126,28 +126,66 @@ lua tests/run.lua
 
 CI runs the same file on every push.
 
-## Versioning and releases
+## Releasing
 
 The TOC holds a **literal** version rather than the packager's
 `@project-version@` token, so the version shows in the in-game addon list even on
-a working copy that was never packaged. Bump it with:
+a working copy that was never packaged. That means the TOC and the tag have to be
+kept in step, which `tools/Set-Version.ps1` does and CI enforces.
+
+Every release, whatever changed:
 
 ```bash
-pwsh ./tools/Set-Version.ps1 1.1.0
+pwsh ./tools/Set-Version.ps1 1.2.0
 ```
 
-That rewrites the TOC and opens a changelog section. Fill the section in, then run
-it again with `-Tag` to commit and tag, and push:
+Fill in the changelog section it opened, then:
+
+```bash
+pwsh ./tools/Set-Version.ps1 1.2.0 -Tag
+```
 
 ```bash
 git push origin main --tags
 ```
 
-Pushing a `v*` tag runs the release workflow: it first refuses to continue if the
-TOC version and the tag disagree, then hands off to the
-[BigWigs packager](https://github.com/BigWigsMods/packager), which builds the zip
-and attaches it to a GitHub release. To publish to CurseForge as well, add a
-`CF_API_KEY` secret and a `CF_PROJECT_ID` repository variable.
+Pushing a `v*` tag runs the release workflow, which
+
+1. refuses to continue if the TOC version and the tag disagree,
+2. carves this version's section out of `CHANGELOG.md` so the release page shows
+   its own notes rather than the whole history,
+3. hands off to the [BigWigs packager](https://github.com/BigWigsMods/packager),
+   which builds the zip, attaches it to a GitHub release, and uploads to
+   CurseForge if it is set up.
+
+The release type follows the tag name: a tag containing `alpha` or `beta` is
+marked as such on CurseForge, anything else is a full release. So `v1.2.0-beta1`
+publishes to the beta channel from the same pipeline.
+
+### Connecting CurseForge
+
+One-time, in this order:
+
+1. Create the project on [CurseForge](https://legacy.curseforge.com/wow/addons)
+   and note its **Project ID**.
+2. Add `## X-Curse-Project-ID: <id>` to `LuresReagents.toc`. The packager reads it
+   from there; there is nothing to configure in the workflow.
+3. Generate an API token from your CurseForge account settings and add it to the
+   repository as the secret **`CF_API_KEY`**
+   (*Settings → Secrets and variables → Actions*).
+
+Until all three exist the workflow still runs and still produces a GitHub
+release — it just skips the upload.
+
+### After a WoW patch
+
+```bash
+pwsh ./tools/Update-Data.ps1
+```
+
+Then bump `## Interface:` in the TOC to the new build's interface number. The
+packager derives the CurseForge game version from that line, so marking the addon
+compatible with the new patch is the same one-line edit. Release as above.
 
 ## Licence
 

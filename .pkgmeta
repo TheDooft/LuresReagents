@@ -2,11 +2,19 @@ package-as: LuresReagents
 
 enable-nolib-creation: no
 
+# The release workflow carves the section for the tag out of CHANGELOG.md into
+# this file, so a release page shows only its own notes instead of the whole
+# history. If the file is missing the packager falls back to a commit list.
+manual-changelog:
+  filename: CHANGELOG-release.md
+  markup-type: markdown
+
 ignore:
   - .github
   - .editorconfig
   - .gitattributes
   - .gitignore
+  - CHANGELOG-release.md
   - README.md
   - tests
   - tools

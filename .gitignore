@@ -2,6 +2,9 @@
 .release/
 *.zip
 
+# Carved out of CHANGELOG.md by the release workflow
+CHANGELOG-release.md
+
 # Editors
 .vscode/
 .idea/

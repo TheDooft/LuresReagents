@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # Full history so the packager can build the changelog from the tags.
+          # Full history so the packager can fall back to a commit changelog.
           fetch-depth: 0
 
       # The TOC carries a literal version so it shows in the in-game addon list.
@@ -31,13 +31,30 @@ jobs:
           fi
           echo "Both at $tag."
 
+      # Take just this version's section out of CHANGELOG.md. .pkgmeta points the
+      # packager at the result, so the release page carries its own notes rather
+      # than the entire history.
+      - name: Changelog for this version
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          awk -v heading="## v$version" '
+            $0 == heading { found = 1; next }
+            found && /^## v/ { exit }
+            found { print }
+          ' CHANGELOG.md > CHANGELOG-release.md
+
+          if [ ! -s CHANGELOG-release.md ]; then
+            echo "::warning::No '## v$version' section in CHANGELOG.md; falling back to the commit log."
+            rm -f CHANGELOG-release.md
+          else
+            cat CHANGELOG-release.md
+          fi
+
+      # Uploads to CurseForge once the TOC carries ## X-Curse-Project-ID and the
+      # CF_API_KEY secret exists. Without either, it just builds the zip and
+      # attaches it to the GitHub release.
       - name: Package and release
         uses: BigWigsMods/packager@v2
         env:
           GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
           CF_API_KEY: ${{ secrets.CF_API_KEY }}
-          # Set the CurseForge project id in the repository variables once the
-          # project exists, then this step uploads there too. Until then the
-          # packager just attaches the zip to the GitHub release.
-        with:
-          args: ${{ vars.CF_PROJECT_ID && format('-p {0}', vars.CF_PROJECT_ID) || '' }}
