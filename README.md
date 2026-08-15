@@ -23,6 +23,10 @@ Used in Skinning lures:              you have 37
 The *craftable* count considers every reagent of the recipe, not just the one you
 are hovering, and the line underneath names whichever reagent runs out first.
 
+The amount you own is coloured on a gradient: red at nothing, orange as it climbs,
+green once you have enough for one craft of the cheapest lure that wants it. So a
+fish reads as "worth keeping" at a glance, without reading the numbers.
+
 On a lure itself, the tooltip lists what it takes and what you already hold:
 
 ```

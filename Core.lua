@@ -63,6 +63,45 @@ function ns.GetItemIcon(itemID)
 	return string.format("|T%d:16:16:0:0|t ", icon)
 end
 
+-- Stops for the stock gradient: red at nothing, through orange and amber, to
+-- green once there is enough for one craft. Each row is {position, r, g, b}.
+-- The path goes via orange rather than straight from red to green, which would
+-- pass through a muddy olive at the midpoint.
+local gradientStops = {
+	{ 0.00, 0.90, 0.15, 0.15 },
+	{ 0.45, 1.00, 0.45, 0.10 },
+	{ 0.75, 1.00, 0.78, 0.15 },
+	{ 1.00, 0.25, 0.95, 0.25 },
+}
+
+local function Blend(from, to, ratio)
+	-- Rounded to an integer: string.format("%02x", ...) rejects a float in 5.4,
+	-- which is what the test harness runs on.
+	return math.floor((from + (to - from) * ratio) * 255 + 0.5)
+end
+
+-- Colour code for `owned`, judged against the amount one craft needs.
+function ns.GradientColor(owned, needed)
+	local progress
+	if needed and needed > 0 then
+		progress = math.min(1, math.max(0, owned / needed))
+	else
+		progress = owned > 0 and 1 or 0
+	end
+
+	for index = 2, #gradientStops do
+		local from, to = gradientStops[index - 1], gradientStops[index]
+		if progress <= to[1] then
+			local span = to[1] - from[1]
+			local ratio = span > 0 and (progress - from[1]) / span or 0
+			return string.format("|cff%02x%02x%02x",
+				Blend(from[2], to[2], ratio),
+				Blend(from[3], to[3], ratio),
+				Blend(from[4], to[4], ratio))
+		end
+	end
+end
+
 -- ns.GetOwned lives in Sources.lua: it has to consult whichever inventory addon
 -- is available before falling back to the current character's own count.
 

@@ -4,13 +4,14 @@ local _, ns = ...
 local L = {
 	USED_IN_LURES   = "Used in Skinning lures:",
 	REAGENTS        = "Lure reagents:",
-	YOU_HAVE        = "you have %d",
-	YOU_HAVE_SPLIT  = "you have %d · %d here",
+	-- %s is the amount owned, already coloured on its gradient.
+	YOU_HAVE        = "you have %s",
+	YOU_HAVE_SPLIT  = "you have %s · %d here",
 	PER_CRAFT       = "%d per craft",
 	CRAFTABLE       = "%d craftable",
 	CAN_CRAFT       = "can craft %d",
 	SHORT_OF        = "short %d %s",
-	HAVE_OF_NEED    = "%d / %d",
+	HAVE_OF_NEED    = "%s / %d",
 
 	OPT_TITLE       = "Lures Reagents",
 	OPT_ENABLED     = "Enable tooltips",
@@ -51,13 +52,13 @@ local translations = {
 	frFR = {
 		USED_IN_LURES   = "Utilisé pour les appâts de Dépeçage :",
 		REAGENTS        = "Composants de l'appât :",
-		YOU_HAVE        = "vous en avez %d",
-		YOU_HAVE_SPLIT  = "vous en avez %d · %d ici",
+		YOU_HAVE        = "vous en avez %s",
+		YOU_HAVE_SPLIT  = "vous en avez %s · %d ici",
 		PER_CRAFT       = "%d par fabrication",
 		CRAFTABLE       = "%d fabricable(s)",
 		CAN_CRAFT       = "%d fabricable(s)",
 		SHORT_OF        = "il manque %d %s",
-		HAVE_OF_NEED    = "%d / %d",
+		HAVE_OF_NEED    = "%s / %d",
 
 		OPT_TITLE       = "Lures Reagents",
 		OPT_ENABLED     = "Activer les infobulles",

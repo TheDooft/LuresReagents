@@ -88,6 +88,32 @@ H.ShowItem(tooltip, LYNXFISH)
 check("the master switch silences everything", #tooltip.lines == 0)
 ns.db.enabled = true
 
+print("=== stock gradient ===")
+local function channels(code)
+	local r, g, b = code:match("^|cff(%x%x)(%x%x)(%x%x)$")
+	return tonumber(r, 16), tonumber(g, 16), tonumber(b, 16)
+end
+
+local r0, g0 = channels(ns.GradientColor(0, 8))
+check("nothing owned is red", r0 > 200 and g0 < 60)
+local rMid, gMid, bMid = channels(ns.GradientColor(4, 8))
+check("halfway is orange", rMid > 200 and gMid > 90 and gMid < 220 and bMid < 60)
+local rFull, gFull = channels(ns.GradientColor(8, 8))
+check("enough for one craft is green", gFull > 200 and rFull < 120)
+check("more than enough stays green", ns.GradientColor(99, 8) == ns.GradientColor(8, 8))
+check("the ramp is monotonic in green", ({ channels(ns.GradientColor(2, 8)) })[2]
+	< ({ channels(ns.GradientColor(6, 8)) })[2])
+
+-- Nesting matters: the coloured number sits inside a dim line, and its |r has to
+-- pop back to that dim colour rather than clearing everything after it.
+H.bags[LYNXFISH] = 3
+tooltip = Tooltip.new()
+H.ShowItem(tooltip, LYNXFISH)
+check("the stock number carries its own colour",
+	tooltip.lines[2].raw:find("|cff%x%x%x%x%x%x3|r") ~= nil)
+check("the line still opens dim", tooltip.lines[2].raw:find("|cff9d9d9d", 1, true) ~= nil)
+check("text after the number survives stripping", has(tooltip.lines[2][2], "you have 3"))
+
 print("=== item icons ===")
 H.bags[LYNXFISH], H.bags[WYRMFISH] = 37, 16
 tooltip = Tooltip.new()

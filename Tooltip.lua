@@ -52,6 +52,23 @@ local function PerCraft(lure, reagentID)
 	return 0
 end
 
+-- The point at which a reagent becomes useful: the cheapest single craft among
+-- the lures that want it. The stock gradient reaches green there.
+local function SmallestRequirement(itemID)
+	local smallest
+	for _, lureID in ipairs(ns.reagentToLures[itemID]) do
+		local perCraft = PerCraft(ns.lures[lureID], itemID)
+		if perCraft > 0 and (not smallest or perCraft < smallest) then
+			smallest = perCraft
+		end
+	end
+	return smallest
+end
+
+local function Owned(count, needed)
+	return ns.GradientColor(count, needed) .. count .. OFF
+end
+
 local function Icon(itemID)
 	if ns.db.showIcons then
 		return ns.GetItemIcon(itemID)
@@ -68,8 +85,10 @@ local function AddReagentLines(tooltip, itemID)
 	if db.showCounts then
 		-- When an inventory addon widened the total, say how much of it is within
 		-- reach right now, so the craftable figure is not read as local stock.
-		local stock = (owned > here) and format(L.YOU_HAVE_SPLIT, owned, here)
-			or format(L.YOU_HAVE, owned)
+		-- The inner |r pops back to the dim colour the whole line opens with.
+		local total = Owned(owned, SmallestRequirement(itemID))
+		local stock = (owned > here) and format(L.YOU_HAVE_SPLIT, total, here)
+			or format(L.YOU_HAVE, total)
 		tooltip:AddDoubleLine(HEADER .. L.USED_IN_LURES .. OFF, DIM .. stock .. OFF)
 	else
 		tooltip:AddLine(HEADER .. L.USED_IN_LURES .. OFF)
@@ -120,8 +139,7 @@ local function AddLureLines(tooltip, itemID)
 		local right
 		if db.showCounts then
 			local owned = ns.GetOwned(reagent.id)
-			right = (owned >= reagent.count and GOOD or BAD)
-				.. format(L.HAVE_OF_NEED, owned, reagent.count) .. OFF
+			right = DIM .. format(L.HAVE_OF_NEED, Owned(owned, reagent.count), reagent.count) .. OFF
 		else
 			right = DIM .. format(L.PER_CRAFT, reagent.count) .. OFF
 		end

@@ -6,6 +6,9 @@
   craftable figure covers every character on the account. The stock line shows how
   much of the total is reachable right now. `/lr source` picks a provider.
 - Item icons in front of every lure and reagent name (`/lr showIcons` to turn off).
+- The amount you own is now coloured on a gradient — red at nothing, through
+  orange, to green once you have enough for one craft — on both the fish tooltip
+  and the reagent list of a lure.
 - The addon list now shows a version. The TOC carries a literal version, bumped by
   `tools/Set-Version.ps1`, and the release workflow refuses to publish if the tag
   and the TOC disagree.
