@@ -171,10 +171,15 @@ One-time, in this order:
    **Project ID**, shown on the project's own page.
 2. Add `## X-Curse-Project-ID: <id>` to `LuresReagents.toc`. The packager reads it
    from there; there is nothing to configure in the workflow.
-3. Generate an API token under your CurseForge account settings —
-   [legacy.curseforge.com/account/api-tokens](https://legacy.curseforge.com/account/api-tokens)
-   at the time of writing — and add it to the repository as the secret
-   **`CF_API_KEY`** (*Settings → Secrets and variables → Actions*).
+3. Generate an **author** API token — *Account settings → API Tokens*, at
+   [authors-old.curseforge.com/account/api-tokens](https://authors-old.curseforge.com/account/api-tokens)
+   as of writing. This is not the Core API key from `console.curseforge.com`,
+   which reads the public API and cannot upload. Add it to the repository as the
+   secret **`CF_API_KEY`** (*Settings → Secrets and variables → Actions*), or:
+
+   ```bash
+   gh secret set CF_API_KEY --repo TheDooft/LuresReagents
+   ```
 
 Until all three exist the workflow still runs and still produces a GitHub
 release — it just skips the upload.
