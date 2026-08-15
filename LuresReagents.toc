@@ -9,6 +9,7 @@
 ## Category: Professions
 ## Category-frFR: Métiers
 ## IconTexture: Interface\Icons\INV_Misc_Fish_43
+## X-Curse-Project-ID: 1653474
 ## X-License: MIT
 
 Locales.lua
