@@ -75,8 +75,21 @@ if (-not $Tag) {
 }
 
 git -C $root add LuresReagents.toc CHANGELOG.md
-git -C $root commit -m "Release v$Version"
-if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
+
+# Both files can already be committed at this version — the usual case when the
+# changelog was written in an earlier commit. That is not a failure; tag anyway.
+git -C $root diff --cached --quiet
+if ($LASTEXITCODE -ne 0) {
+    git -C $root commit -m "Release v$Version"
+    if ($LASTEXITCODE -ne 0) { throw "git commit failed" }
+} else {
+    Write-Host "TOC and changelog are already committed at $Version; tagging the current commit." -ForegroundColor Yellow
+}
+
+$existing = git -C $root tag --list "v$Version"
+if ($existing) {
+    throw "Tag v$Version already exists. Delete it first (git tag -d v$Version) or pick another version."
+}
 
 git -C $root tag "v$Version"
 if ($LASTEXITCODE -ne 0) { throw "git tag failed" }
