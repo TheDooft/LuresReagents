@@ -166,13 +166,15 @@ publishes to the beta channel from the same pipeline.
 
 One-time, in this order:
 
-1. Create the project on [CurseForge](https://legacy.curseforge.com/wow/addons)
-   and note its **Project ID**.
+1. Create the project from the author dashboard at
+   [authors.curseforge.com](https://authors.curseforge.com/) and note its
+   **Project ID**, shown on the project's own page.
 2. Add `## X-Curse-Project-ID: <id>` to `LuresReagents.toc`. The packager reads it
    from there; there is nothing to configure in the workflow.
-3. Generate an API token from your CurseForge account settings and add it to the
-   repository as the secret **`CF_API_KEY`**
-   (*Settings → Secrets and variables → Actions*).
+3. Generate an API token under your CurseForge account settings —
+   [legacy.curseforge.com/account/api-tokens](https://legacy.curseforge.com/account/api-tokens)
+   at the time of writing — and add it to the repository as the secret
+   **`CF_API_KEY`** (*Settings → Secrets and variables → Actions*).
 
 Until all three exist the workflow still runs and still produces a GitHub
 release — it just skips the upload.
