@@ -1,0 +1,12 @@
+package-as: LuresReagents
+
+enable-nolib-creation: no
+
+ignore:
+  - .github
+  - .editorconfig
+  - .gitattributes
+  - .gitignore
+  - README.md
+  - tests
+  - tools

@@ -1,0 +1,16 @@
+## Interface: 120100
+## Title: Lures Reagents
+## Notes: Shows on a fish tooltip which Majestic Beast Lure it is used for, and how many you can craft.
+## Notes-frFR: Indique sur l'infobulle d'un poisson pour quel appât de bête majestueuse il sert, et combien vous pouvez en fabriquer.
+## Author: TheDooft
+## Version: @project-version@
+## SavedVariables: LuresReagentsDB
+## Category: Professions
+## Category-frFR: Métiers
+## IconTexture: Interface\Icons\INV_Misc_Fish_43
+## X-License: MIT
+
+Locales.lua
+Data.lua
+Core.lua
+Tooltip.lua

@@ -1,0 +1,7 @@
+# BigWigs packager output
+.release/
+*.zip
+
+# Editors
+.vscode/
+.idea/
