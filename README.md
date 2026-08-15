@@ -35,6 +35,28 @@ Lure reagents:                       can craft 2
 
 Counts include your bank, reagent bank and warband bank by default.
 
+## Counting your other characters
+
+If you have an inventory addon installed, the totals cover your whole account
+instead of just the character you are playing, and the stock line says how much of
+that is within reach right now:
+
+```
+Used in Skinning lures:          you have 137 · 37 here
+  Majestic Eversong Lure   8 per craft · 17 craftable
+```
+
+Supported, tried in this order: **Syndicator**, **Altoholic** (through its
+DataStore modules), **Warband Nexus**. Pick a specific one with `/lr source
+syndicator`, or `/lr source character` to ignore them all.
+
+None of them is required — without any, the addon counts what the client can see.
+Guild banks are always excluded: shared stock is not reliably yours to spend on a
+craft. Those addons already print their own per-character breakdown into the same
+tooltip, so this one takes the total and leaves the breakdown to them. If a
+provider reports less than the client can see — a stale cache, usually — the live
+count wins.
+
 ## Options
 
 `/lr` lists every option and its state, `/lr <option>` toggles one, and
@@ -46,11 +68,15 @@ Counts include your bank, reagent bank and warband bank by default.
 | `enabled` | on | Master switch for all tooltip additions |
 | `showOnReagents` | on | Annotate fish tooltips |
 | `showOnLures` | on | Annotate lure tooltips |
+| `showIcons` | on | Put each item's icon in front of its name |
 | `showCounts` | on | Show how many you own |
 | `showCraftable` | on | Show how many you can craft |
 | `showShortage` | on | Name the reagent that caps the recipe |
 | `includeBank` | on | Count bank and reagent bank |
 | `includeWarband` | on | Count the warband bank |
+
+`/lr source <auto\|character\|syndicator\|altoholic\|warbandnexus>` chooses where
+counts come from; it is a dropdown in the settings panel.
 
 ## Languages
 
@@ -96,13 +122,28 @@ lua tests/run.lua
 
 CI runs the same file on every push.
 
-## Building a release
+## Versioning and releases
 
-Tag a commit `vX.Y.Z` and push the tag. The GitHub Actions workflow runs the
-[BigWigs packager](https://github.com/BigWigsMods/packager), which builds the zip,
-substitutes `@project-version@` in the TOC and attaches it to a GitHub release. To
-publish to CurseForge as well, add a `CF_API_KEY` secret and a `CF_PROJECT_ID`
-repository variable.
+The TOC holds a **literal** version rather than the packager's
+`@project-version@` token, so the version shows in the in-game addon list even on
+a working copy that was never packaged. Bump it with:
+
+```bash
+pwsh ./tools/Set-Version.ps1 1.1.0
+```
+
+That rewrites the TOC and opens a changelog section. Fill the section in, then run
+it again with `-Tag` to commit and tag, and push:
+
+```bash
+git push origin main --tags
+```
+
+Pushing a `v*` tag runs the release workflow: it first refuses to continue if the
+TOC version and the tag disagree, then hands off to the
+[BigWigs packager](https://github.com/BigWigsMods/packager), which builds the zip
+and attaches it to a GitHub release. To publish to CurseForge as well, add a
+`CF_API_KEY` secret and a `CF_PROJECT_ID` repository variable.
 
 ## Licence
 

@@ -52,14 +52,25 @@ local function PerCraft(lure, reagentID)
 	return 0
 end
 
+local function Icon(itemID)
+	if ns.db.showIcons then
+		return ns.GetItemIcon(itemID)
+	end
+	return ""
+end
+
 -- On a fish: which lures consume it, and how many of each you could make.
 local function AddReagentLines(tooltip, itemID)
 	local db = ns.db
-	local owned = ns.GetOwned(itemID)
+	local owned, here = ns.GetOwned(itemID)
 
 	tooltip:AddLine(" ")
 	if db.showCounts then
-		tooltip:AddDoubleLine(HEADER .. L.USED_IN_LURES .. OFF, DIM .. format(L.YOU_HAVE, owned) .. OFF)
+		-- When an inventory addon widened the total, say how much of it is within
+		-- reach right now, so the craftable figure is not read as local stock.
+		local stock = (owned > here) and format(L.YOU_HAVE_SPLIT, owned, here)
+			or format(L.YOU_HAVE, owned)
+		tooltip:AddDoubleLine(HEADER .. L.USED_IN_LURES .. OFF, DIM .. stock .. OFF)
 	else
 		tooltip:AddLine(HEADER .. L.USED_IN_LURES .. OFF)
 	end
@@ -75,15 +86,16 @@ local function AddReagentLines(tooltip, itemID)
 				right = right .. DIM .. "  ·  " .. OFF
 					.. (crafts > 0 and GOOD or BAD) .. format(L.CRAFTABLE, crafts) .. OFF
 			end
-			tooltip:AddDoubleLine("  " .. NAME .. ns.GetItemName(lureID, lure.name) .. OFF, right, 1, 1, 1, 1, 1, 1)
+			tooltip:AddDoubleLine("  " .. Icon(lureID) .. NAME .. ns.GetItemName(lureID, lure.name) .. OFF,
+				right, 1, 1, 1, 1, 1, 1)
 
 			-- Name the reagent that actually caps the recipe, when it is not this one.
 			if db.showShortage and limiting and limiting.id ~= itemID then
 				local selfCrafts = floor(owned / perCraft)
 				if selfCrafts > crafts then
 					local missing = selfCrafts * limiting.count - ns.GetOwned(limiting.id)
-					tooltip:AddLine("    " .. WARN
-						.. format(L.SHORT_OF, missing, ns.GetItemName(limiting.id, limiting.name)) .. OFF)
+					tooltip:AddLine("    " .. WARN .. format(L.SHORT_OF, missing,
+						Icon(limiting.id) .. ns.GetItemName(limiting.id, limiting.name)) .. OFF)
 				end
 			end
 		end
@@ -113,7 +125,8 @@ local function AddLureLines(tooltip, itemID)
 		else
 			right = DIM .. format(L.PER_CRAFT, reagent.count) .. OFF
 		end
-		tooltip:AddDoubleLine("  " .. NAME .. ns.GetItemName(reagent.id, reagent.name) .. OFF, right, 1, 1, 1, 1, 1, 1)
+		tooltip:AddDoubleLine("  " .. Icon(reagent.id) .. NAME .. ns.GetItemName(reagent.id, reagent.name) .. OFF,
+			right, 1, 1, 1, 1, 1, 1)
 	end
 end
 

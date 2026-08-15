@@ -88,6 +88,74 @@ H.ShowItem(tooltip, LYNXFISH)
 check("the master switch silences everything", #tooltip.lines == 0)
 ns.db.enabled = true
 
+print("=== item icons ===")
+H.bags[LYNXFISH], H.bags[WYRMFISH] = 37, 16
+tooltip = Tooltip.new()
+H.ShowItem(tooltip, LYNXFISH)
+check("the lure line carries a texture escape", tooltip.lines[3].raw:find("|T" .. (100000 + EVERSONG) .. ":", 1, true) ~= nil)
+check("the shortage line carries one too", tooltip.lines[4].raw:find("|T" .. (100000 + WYRMFISH) .. ":", 1, true) ~= nil)
+ns.db.showIcons = false
+tooltip = Tooltip.new()
+H.ShowItem(tooltip, LYNXFISH)
+check("none when the option is off", tooltip.lines[3].raw:find("|T", 1, true) == nil)
+ns.db.showIcons = true
+
+print("=== inventory addons as a data source ===")
+-- 37 in bags here, plus an alt holding 60 and 40 in the warband bank.
+H.bags[LYNXFISH], H.bags[WYRMFISH] = 37, 200
+H.StubSyndicator({
+	[LYNXFISH] = { characters = { { bags = 37, bank = 0 }, { bags = 60, bank = 0, mail = 0 } }, warband = 40 },
+})
+check("auto picks it up", ns.GetActiveProvider() ~= nil and ns.GetActiveProvider().id == "syndicator")
+local total, here = ns.GetOwned(LYNXFISH)
+check("total is 37+60+40", total == 137)
+check("local share is still 37", here == 37)
+tooltip = Tooltip.new()
+H.ShowItem(tooltip, LYNXFISH)
+tooltip:Render("Lynxfish, with Syndicator")
+check("the split is shown", has(tooltip.lines[2][2], "you have 137") and has(tooltip.lines[2][2], "37 here"))
+check("craftable uses the account total", has(tooltip.lines[3][2], "17 craftable"))
+
+H.ClearProviders()
+H.StubDataStore({ [LYNXFISH] = { bags = 50, bank = 10, reagentBag = 5 } })
+H.warband[LYNXFISH] = 20
+check("altoholic is used when it is the only one", ns.GetActiveProvider().id == "altoholic")
+check("characters plus the live warband bank", ns.GetOwned(LYNXFISH) == 85)
+
+H.ClearProviders()
+H.warband[LYNXFISH] = 0
+H.StubWarbandNexus({
+	[LYNXFISH] = { warbandBank = 25, characters = { { total = 37 }, { total = 13 } } },
+})
+check("warband nexus is used", ns.GetActiveProvider().id == "warbandnexus")
+check("its totals are summed", ns.GetOwned(LYNXFISH) == 75)
+
+print("=== data source fallbacks ===")
+H.ClearProviders()
+H.StubSyndicator({})           -- provider present but knows nothing about the item
+check("no count means fall back to live", ns.GetOwned(LYNXFISH) == 37)
+H.StubSyndicator({ [LYNXFISH] = { characters = { { bags = 2 } } } })
+check("a stale lower count never wins", ns.GetOwned(LYNXFISH) == 37)
+_G.Syndicator = { API = { IsReady = function() return false end, GetInventoryInfoByItemID = function() return nil end } }
+check("not ready means not available", ns.GetActiveProvider() == nil)
+_G.Syndicator = { API = { GetInventoryInfoByItemID = function() error("boom") end } }
+check("a provider that throws is survivable", ns.GetOwned(LYNXFISH) == 37)
+H.ClearProviders()
+
+ns.db.dataSource = "character"
+H.StubSyndicator({ [LYNXFISH] = { characters = { { bags = 999 } } } })
+check("'character' ignores providers", ns.GetOwned(LYNXFISH) == 37)
+ns.db.dataSource = "warbandnexus"
+check("naming an absent provider falls back", ns.GetOwned(LYNXFISH) == 37)
+ns.db.dataSource = "auto"
+H.ClearProviders()
+
+print("=== version ===")
+-- Guards against the TOC losing its literal version and falling back to "?",
+-- which is what stops the in-game addon list from showing one.
+check("the TOC carries a literal semver, read back as " .. tostring(ns.version),
+	type(ns.version) == "string" and ns.version:match("^%d+%.%d+%.%d+$") ~= nil)
+
 print("=== slash command ===")
 SlashCmdList.LURESREAGENTS("showcounts")
 check("toggles case-insensitively", ns.db.showCounts == false)
@@ -97,6 +165,12 @@ SlashCmdList.LURESREAGENTS("nope")
 check("reports an unknown option", has(H.chat[#H.chat], "nope"))
 SlashCmdList.LURESREAGENTS("")
 check("lists every option", #H.chat > 8)
+SlashCmdList.LURESREAGENTS("source character")
+check("sets the data source", ns.db.dataSource == "character")
+SlashCmdList.LURESREAGENTS("source nonsense")
+check("rejects an unknown source", ns.db.dataSource == "character" and has(H.chat[#H.chat], "nonsense"))
+SlashCmdList.LURESREAGENTS("source auto")
+check("sets it back to auto", ns.db.dataSource == "auto")
 
 print("")
 if failures > 0 then

@@ -18,6 +18,19 @@ jobs:
           # Full history so the packager can build the changelog from the tags.
           fetch-depth: 0
 
+      # The TOC carries a literal version so it shows in the in-game addon list.
+      # That can drift from the tag, and a release whose zip disagrees with the
+      # addon list is worse than no release, so fail loudly instead.
+      - name: Tag matches the TOC version
+        run: |
+          toc=$(sed -n 's/^## Version:[[:space:]]*//p' LuresReagents.toc | tr -d '\r')
+          tag="${GITHUB_REF_NAME#v}"
+          if [ "$toc" != "$tag" ]; then
+            echo "::error::TOC version '$toc' does not match tag '$GITHUB_REF_NAME'. Run tools/Set-Version.ps1 $tag."
+            exit 1
+          fi
+          echo "Both at $tag."
+
       - name: Package and release
         uses: BigWigsMods/packager@v2
         env:

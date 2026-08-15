@@ -15,12 +15,32 @@ local chat = {}
 _G.GetLocale = function() return "enUS" end
 _G.issecretvalue = function(value) return value == "<SECRET>" end
 
+local warband = {} -- itemID -> amount in the warband bank
+
 _G.C_Item = {
 	GetItemNameByID = function(id) return names[id] end,
 	RequestLoadItemDataByID = function(id) requested[id] = true end,
-	GetItemCount = function(id, includeBank)
-		return (bags[id] or 0) + (includeBank and (banked[id] or 0) or 0)
+	GetItemIconByID = function(id) return 100000 + id end,
+	-- GetItemCount(itemInfo, includeBank, includeUses, includeReagentBank, includeAccountBank)
+	GetItemCount = function(id, includeBank, _, _, includeAccountBank)
+		return (bags[id] or 0)
+			+ (includeBank and (banked[id] or 0) or 0)
+			+ (includeAccountBank and (warband[id] or 0) or 0)
 	end,
+}
+
+-- Read the real TOC, so a test can catch the version going missing from it.
+local tocVersion
+do
+	local toc = io.open(ADDON_DIR .. "LuresReagents.toc", "r")
+	if toc then
+		tocVersion = toc:read("a"):match("##%s*Version:%s*([^\r\n]+)")
+		toc:close()
+	end
+end
+
+_G.C_AddOns = {
+	GetAddOnMetadata = function(_, field) return field == "Version" and tocVersion or nil end,
 }
 
 local callbacks = {}
@@ -46,15 +66,24 @@ _G.Settings = nil -- exercises the guard in RegisterSettings
 local Tooltip = {}
 Tooltip.__index = Tooltip
 
+-- Colour codes and texture escapes would swamp every assertion, so the recorded
+-- line is cleaned; `raw` keeps the original for the tests that check the markup.
 local function strip(text)
-	return (tostring(text):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", ""))
+	return (tostring(text)
+		:gsub("|T.-|t", "")
+		:gsub("|c%x%x%x%x%x%x%x%x", "")
+		:gsub("|r", ""))
 end
 
 function Tooltip.new()
 	return setmetatable({ lines = {}, scripts = {}, shown = 0 }, Tooltip)
 end
-function Tooltip:AddLine(text) table.insert(self.lines, { strip(text) }) end
-function Tooltip:AddDoubleLine(left, right) table.insert(self.lines, { strip(left), strip(right) }) end
+function Tooltip:AddLine(text)
+	table.insert(self.lines, { strip(text), raw = tostring(text) })
+end
+function Tooltip:AddDoubleLine(left, right)
+	table.insert(self.lines, { strip(left), strip(right), raw = tostring(left) .. tostring(right) })
+end
 function Tooltip:HookScript(name, fn) self.scripts[name] = fn end
 function Tooltip:Show() self.shown = self.shown + 1 end
 
@@ -79,7 +108,7 @@ function Tooltip:Render(title)
 end
 
 local ns = {}
-for _, file in ipairs({ "Locales.lua", "Data.lua", "Core.lua", "Tooltip.lua" }) do
+for _, file in ipairs({ "Locales.lua", "Data.lua", "Sources.lua", "Core.lua", "Tooltip.lua" }) do
 	assert(loadfile(ADDON_DIR .. file))("LuresReagents", ns)
 end
 
@@ -97,13 +126,68 @@ local function ShowItem(tooltip, itemID)
 	end
 end
 
+-- Stand-ins for the optional inventory addons, shaped like the real return
+-- values read out of Syndicator, DataStore and WarbandNexus.
+local function StubSyndicator(perItem)
+	_G.Syndicator = {
+		API = {
+			IsReady = function() return true end,
+			GetInventoryInfoByItemID = function(itemID)
+				local entry = perItem[itemID]
+				if not entry then return nil end
+				return {
+					characters = entry.characters or {},
+					guilds = entry.guilds or {},
+					warband = { entry.warband or 0 },
+				}
+			end,
+		},
+	}
+end
+
+local function StubDataStore(perCharacter)
+	_G.DataStore = {
+		GetRealms = function() return { ["Realm"] = true } end,
+		GetCharacters = function() return { Alt = "Default.Realm.Alt" } end,
+		GetContainerItemCount = function(_, _, itemID)
+			local entry = perCharacter[itemID]
+			if not entry then return 0, 0, 0 end
+			return entry.bags or 0, entry.bank or 0, entry.reagentBag or 0
+		end,
+	}
+end
+
+local function StubWarbandNexus(perItem)
+	_G.WarbandNexus = {
+		GetDetailedItemCountsFast = function(_, itemID)
+			local entry = perItem[itemID]
+			if not entry then return nil end
+			return {
+				warbandBank = entry.warbandBank or 0,
+				guilds = entry.guilds or {},
+				personalBankTotal = 0,
+				characters = entry.characters or {},
+			}
+		end,
+	}
+end
+
+local function ClearProviders()
+	_G.Syndicator, _G.DataStore, _G.WarbandNexus = nil, nil, nil
+end
+
 return {
 	ns = ns,
 	Tooltip = Tooltip,
 	ShowItem = ShowItem,
 	bags = bags,
 	banked = banked,
+	warband = warband,
 	names = names,
 	requested = requested,
 	chat = chat,
+	StubSyndicator = StubSyndicator,
+	StubDataStore = StubDataStore,
+	StubWarbandNexus = StubWarbandNexus,
+	ClearProviders = ClearProviders,
 }
