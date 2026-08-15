@@ -132,6 +132,19 @@ The scripts under `tools/` run on Windows PowerShell 5.1 — PowerShell 7 is not
 required. Run them from the repo root, with the leading `.\`, which PowerShell
 insists on for a script in the current directory.
 
+Windows blocks `.ps1` files by default (`Restricted`), so a fresh clone will hit
+*"running scripts is disabled on this system"*. Either bypass it per call:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\Set-Version.ps1 1.2.0
+```
+
+or allow local scripts once, for your user only, which needs no admin rights:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
 The TOC holds a **literal** version rather than the packager's
 `@project-version@` token, so the version shows in the in-game addon list even on
 a working copy that was never packaged. That means the TOC and the tag have to be
