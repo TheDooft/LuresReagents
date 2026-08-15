@@ -105,7 +105,7 @@ Spell → SpellReagents → reagents and quantities
 To regenerate against your installed client:
 
 ```bash
-pwsh ./tools/Update-Data.ps1
+.\tools\Update-Data.ps1
 ```
 
 The script detects the build from `.build.info`, downloads the DB2 exports (cached
@@ -128,6 +128,10 @@ CI runs the same file on every push.
 
 ## Releasing
 
+The scripts under `tools/` run on Windows PowerShell 5.1 — PowerShell 7 is not
+required. Run them from the repo root, with the leading `.\`, which PowerShell
+insists on for a script in the current directory.
+
 The TOC holds a **literal** version rather than the packager's
 `@project-version@` token, so the version shows in the in-game addon list even on
 a working copy that was never packaged. That means the TOC and the tag have to be
@@ -136,13 +140,13 @@ kept in step, which `tools/Set-Version.ps1` does and CI enforces.
 Every release, whatever changed:
 
 ```bash
-pwsh ./tools/Set-Version.ps1 1.2.0
+.\tools\Set-Version.ps1 1.2.0
 ```
 
 Fill in the changelog section it opened, then:
 
 ```bash
-pwsh ./tools/Set-Version.ps1 1.2.0 -Tag
+.\tools\Set-Version.ps1 1.2.0 -Tag
 ```
 
 ```bash
@@ -187,7 +191,7 @@ release — it just skips the upload.
 ### After a WoW patch
 
 ```bash
-pwsh ./tools/Update-Data.ps1
+.\tools\Update-Data.ps1
 ```
 
 Then bump `## Interface:` in the TOC to the new build's interface number. The
